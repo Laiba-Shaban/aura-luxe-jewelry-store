@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aura Luxe | Luxury Handcrafted Jewelry</title>
+    <style>
+        :root { --gold: #d4af37; --bg: #050505; --text: #e0e0e0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Georgia', serif; margin: 0; display: flex; min-height: 100vh; }
+        
+        /* Layout */
+        aside { width: 250px; padding: 3rem 2rem; border-right: 1px solid #222; position: sticky; top: 0; height: 100vh; background: #0a0a0a; }
+        main { flex: 1; padding: 4rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3rem; }
+        .about { margin-bottom: 4rem; border-left: 3px solid var(--gold); padding-left: 20px; font-style: italic; color: #aaa; }
+        
+        /* Gallery */
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 40px; }
+        .card { background: #0a0a0a; border: 1px solid #1a1a1a; padding: 15px; transition: 0.4s; text-align: center; }
+        .card:hover { border-color: var(--gold); transform: translateY(-10px); }
+        .card img { width: 100%; height: 300px; object-fit: cover; filter: grayscale(30%); transition: 0.5s; }
+        .card:hover img { filter: grayscale(0%); }
+        
+        .add-btn { width: 100%; padding: 12px; background: transparent; border: 1px solid var(--gold); color: var(--gold); cursor: pointer; transition: 0.3s; margin-top: 15px; font-weight: bold; }
+        .add-btn:hover { background: var(--gold); color: black; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { background: #1a1a1a; padding: 2rem; width: 400px; border: 1px solid var(--gold); color: white; max-height: 80vh; overflow-y: auto; }
+    </style>
+</head>
+<body>
+
+    <aside>
+        <a href="#" style="font-size: 1.5rem; color: var(--gold); text-decoration: none; font-weight: bold; letter-spacing: 2px;">AURA LUXE</a>
+        <nav style="margin-top: 3rem;">
+            <a href="#" onclick="filterProducts('all')" style="display:block; color:white; margin:20px 0; text-decoration:none; text-transform:uppercase; font-size: 0.8rem;">All Collection</a>
+            <a href="#" onclick="filterProducts('necklace')" style="display:block; color:white; margin:20px 0; text-decoration:none; text-transform:uppercase; font-size: 0.8rem;">Necklaces</a>
+            <a href="#" onclick="filterProducts('earrings')" style="display:block; color:white; margin:20px 0; text-decoration:none; text-transform:uppercase; font-size: 0.8rem;">Earrings</a>
+            <a href="#" onclick="filterProducts('ring')" style="display:block; color:white; margin:20px 0; text-decoration:none; text-transform:uppercase; font-size: 0.8rem;">Rings</a>
+            <a href="#" onclick="filterProducts('tikkas')" style="display:block; color:white; margin:20px 0; text-decoration:none; text-transform:uppercase; font-size: 0.8rem;">Maang Tikkas</a>
+            <a href="#" onclick="filterProducts('anklets')" style="display:block; color:white; margin:20px 0; text-decoration:none; text-transform:uppercase; font-size: 0.8rem;">Anklets</a>
+            <a href="#" onclick="showContact()" style="display:block; color:white; margin:20px 0; text-decoration:none; text-transform:uppercase; font-size: 0.8rem;">Contact Us</a>
+        </nav>
+    </aside>
+
+    <main>
+        <div class="header">
+            <h1 id="categoryTitle">Our Collection</h1>
+            <button onclick="toggleBag()" style="background:var(--gold); border:none; padding:10px 20px; cursor:pointer; font-family:serif;">View Bag (<span id="cart-count">0</span>)</button>
+        </div>
+        
+        <div class="about" id="aboutText">"Timeless elegance for the modern royal. Every piece is handcrafted in the heart of Rahim Yar Khan."</div>
+
+        <div class="gallery" id="productGrid"></div>
+
+        <div id="contactSection" style="display:none;">
+            <h2>Contact Us</h2>
+            <p>Email: contact@auraluxe.com</p>
+            <p>Location: Rahim Yar Khan, Pakistan</p>
+        </div>
+    </main>
+
+    <div id="bagModal" class="modal">
+        <div class="modal-content">
+            <h2>Your Shopping Bag</h2>
+            <ul id="bagList" style="list-style: none; padding: 0;"></ul>
+            
+            <div id="checkoutForm" style="display:none; margin-top:20px; border-top:1px solid #444; padding-top:10px;">
+                <input type="text" id="custName" placeholder="Full Name" style="width:100%; margin:5px 0; padding:8px;">
+                <input type="text" id="custAddress" placeholder="Address in Rahim Yar Khan" style="width:100%; margin:5px 0; padding:8px;">
+                <input type="text" id="custNumber" placeholder="Phone Number" style="width:100%; margin:5px 0; padding:8px;">
+            </div>
+
+            <button id="orderBtn" onclick="showForm()" style="margin-top:20px; width:100%; padding:10px; background:var(--gold); border:none; cursor:pointer;">Confirm Order & Pay</button>
+            <button id="payBtn" onclick="finalizePayment()" style="display:none; margin-top:20px; width:100%; padding:10px; background:var(--gold); border:none; cursor:pointer;">Pay Now</button>
+            <button onclick="toggleBag()" style="margin-top:10px; width:100%; padding:10px; background:transparent; border:1px solid #555; color:white; cursor:pointer;">Close</button>
+        </div>
+    </div>
+
+    <script>
+        let cartItems = [];
+        const products = [
+            { name: "Royal Peacock Necklace", img: "necklace.png", price: 150, cat: "necklace" },
+            { name: "Mughal-Era Jhumka", img: "jhumka.png", price: 85, cat: "earrings" },
+            { name: "Maharani Statement Ring", img: "ring.png", price: 120, cat: "ring" },
+            { name: "Brushed Gold Earrings", img: "earrings.png", price: 95, cat: "earrings" },
+            { name: "Multi-strand Pearls", img: "pearls.png", price: 110, cat: "necklace" },
+            { name: "Royal Maang Tikka", img: "maang-tikka.png", price: 200, cat: "tikkas" },
+            { name: "Grand Bridal Set", img: "bridal-set.png", price: 950, cat: "necklace" },
+            { name: "Elegant Gold Anklet", img: "anklet.png", price: 50, cat: "anklets" },
+            { name: "Silver Elegance Anklet", img: "silver-anklet.png", price: 60, cat: "anklets" }
+        ];
+
+        function filterProducts(category) {
+            document.getElementById('productGrid').style.display = 'grid';
+            document.getElementById('contactSection').style.display = 'none';
+            document.getElementById('aboutText').style.display = 'block';
+            const grid = document.getElementById('productGrid');
+            const title = document.getElementById('categoryTitle');
+            grid.innerHTML = '';
+            title.innerText = category === 'all' ? 'Our Collection' : category.charAt(0).toUpperCase() + category.slice(1);
+            const filtered = category === 'all' ? products : products.filter(p => p.cat === category);
+            filtered.forEach(p => {
+                grid.innerHTML += `
+                    <div class="card">
+                        <img src="${p.img}" alt="${p.name}">
+                        <h3>${p.name}</h3>
+                        <div style="color: var(--gold); margin-bottom:10px;">$${p.price}</div>
+                        <button class="add-btn" onclick="addToBag('${p.name}', ${p.price})">Add to Bag</button>
+                    </div>
+                `;
+            });
+        }
+
+        function addToBag(name, price) {
+            cartItems.push({ name, price });
+            document.getElementById('cart-count').innerText = cartItems.length;
+            updateBagList();
+        }
+
+        function removeFromBag(index) {
+            cartItems.splice(index, 1);
+            document.getElementById('cart-count').innerText = cartItems.length;
+            updateBagList();
+        }
+
+        function updateBagList() {
+            const list = document.getElementById('bagList');
+            const total = cartItems.reduce((sum, item) => sum + item.price, 0);
+            list.innerHTML = cartItems.map((item, index) => `
+                <li style="margin-bottom: 10px; display: flex; justify-content: space-between;">
+                    ${item.name} ($${item.price})
+                    <button onclick="removeFromBag(${index})" style="background: #c00; border: none; color: white; cursor: pointer; padding: 2px 8px;">Remove</button>
+                </li>
+            `).join('');
+            list.innerHTML += `<li style="margin-top:20px; font-weight:bold; border-top:1px solid #444; padding-top:10px;">Total: $${total.toFixed(2)}</li>`;
+        }
+
+        function toggleBag() {
+            const modal = document.getElementById('bagModal');
+            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function showForm() {
+            if(cartItems.length === 0) { alert("Your bag is empty!"); return; }
+            document.getElementById('checkoutForm').style.display = 'block';
+            document.getElementById('orderBtn').style.display = 'none';
+            document.getElementById('payBtn').style.display = 'block';
+        }
+
+        function finalizePayment() {
+            const name = document.getElementById('custName').value;
+            const address = document.getElementById('custAddress').value;
+            const number = document.getElementById('custNumber').value;
+            if(!name || !address || !number) { alert("Please fill in all details."); return; }
+            alert("Thank you, " + name + "! Your order is confirmed for " + address + ". We will contact you at " + number + ".");
+            cartItems = [];
+            document.getElementById('cart-count').innerText = "0";
+            document.getElementById('checkoutForm').style.display = 'none';
+            document.getElementById('orderBtn').style.display = 'block';
+            document.getElementById('payBtn').style.display = 'none';
+            updateBagList();
+            toggleBag();
+        }
+
+        function showContact() {
+            document.getElementById('productGrid').style.display = 'none';
+            document.getElementById('aboutText').style.display = 'none';
+            document.getElementById('categoryTitle').innerText = "Contact Us";
+            document.getElementById('contactSection').style.display = 'block';
+        }
+
+        filterProducts('all');
+    </script>
+</body>
+</html>s
